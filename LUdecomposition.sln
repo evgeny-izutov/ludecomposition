@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LUdecompositionTest", "LUde
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "2. LUdecomposition (OpenMP)", "2. LUdecomposition (OpenMP)\2. LUdecomposition (OpenMP).vcxproj", "{7E1104DB-5388-4F06-8F4B-CCB40EBE68E0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "4. LUdecomposition (TBB)", "4. LUdecomposition (TBB)\4. LUdecomposition (TBB).vcxproj", "{75507F82-4991-4C6E-A936-B24F295F06DB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -66,6 +68,17 @@ Global
 		{7E1104DB-5388-4F06-8F4B-CCB40EBE68E0}.Release|Win32.Build.0 = Release|Win32
 		{7E1104DB-5388-4F06-8F4B-CCB40EBE68E0}.Release|x64.ActiveCfg = Release|x64
 		{7E1104DB-5388-4F06-8F4B-CCB40EBE68E0}.Release|x64.Build.0 = Release|x64
+		{75507F82-4991-4C6E-A936-B24F295F06DB}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{75507F82-4991-4C6E-A936-B24F295F06DB}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{75507F82-4991-4C6E-A936-B24F295F06DB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{75507F82-4991-4C6E-A936-B24F295F06DB}.Debug|Win32.Build.0 = Debug|Win32
+		{75507F82-4991-4C6E-A936-B24F295F06DB}.Debug|x64.ActiveCfg = Debug|Win32
+		{75507F82-4991-4C6E-A936-B24F295F06DB}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{75507F82-4991-4C6E-A936-B24F295F06DB}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{75507F82-4991-4C6E-A936-B24F295F06DB}.Release|Win32.ActiveCfg = Release|Win32
+		{75507F82-4991-4C6E-A936-B24F295F06DB}.Release|Win32.Build.0 = Release|Win32
+		{75507F82-4991-4C6E-A936-B24F295F06DB}.Release|x64.ActiveCfg = Release|x64
+		{75507F82-4991-4C6E-A936-B24F295F06DB}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
