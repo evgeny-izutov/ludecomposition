@@ -165,7 +165,7 @@ void SolveLeftEquation(int bias, int squareSize, int matrixSize, const double *A
 
 void UpdateDiagonalSubmatrix(int bias, int squareSize, int matrixSize, double *A, double *L, double *U) {
 
-	#pragma omp parallel for
+	#pragma omp parallel for if (matrixSize - bias - squareSize > 800)
 	for (int i = bias + squareSize; i < matrixSize; i++) {
 		for (int j = bias + squareSize; j < matrixSize; j++) {
 			double sum = 0;
@@ -221,7 +221,6 @@ int main(int argc, char *argv[]) {
 	QueryPerformanceFrequency(&LIFrequency);
 	double pcFreq = (double) LIFrequency.QuadPart;
 
-	omp_set_num_threads(8);
 	omp_set_nested(1);
 
 	LARGE_INTEGER start, finish;
@@ -229,8 +228,8 @@ int main(int argc, char *argv[]) {
 	LUDecompose(N, A, L, U);
     QueryPerformanceCounter(&finish);
 	
-	//WriteLMatrixToFile(argv[2], L, N);
-	//WriteUMatrixToFile(argv[3], U, N);
+	WriteLMatrixToFile(argv[2], L, N);
+	WriteUMatrixToFile(argv[3], U, N);
 	WriteTimeToFile(argv[4], (finish.QuadPart - start.QuadPart)/pcFreq);
 	
 	_mm_free(A);
