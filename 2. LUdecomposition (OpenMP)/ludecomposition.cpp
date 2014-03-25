@@ -134,15 +134,13 @@ void DiagonalSubmatrixLUDecompose(int bias, int squareSize, int matrixSize, cons
 }
 
 void SolveUpperEquation(int bias, int squareSize, int matrixSize, const double *A, const double *L, double *U) {
-	int i, j, k;
-	double sum;
 
-	#pragma omp parallel for private(sum, i, j, k)
-	for (j = bias + squareSize; j < matrixSize; j++) {
+	#pragma omp parallel for
+	for (int j = bias + squareSize; j < matrixSize; j++) {
 		U[j*(j + 1)/2 + bias] = A[bias*matrixSize + j];
-		for (i = bias + 1; i < bias + squareSize; i++) {
-			sum = 0.0;
-			for (k = bias; k < i; k++) {
+		for (int i = bias + 1; i < bias + squareSize; i++) {
+			double sum = 0.0;
+			for (int k = bias; k < i; k++) {
 				sum += U[j*(j + 1)/2 + k]*L[i*(i + 1)/2 + k];
 			}
 			U[j*(j + 1)/2 + i] = A[i*matrixSize + j] - sum;
@@ -151,15 +149,13 @@ void SolveUpperEquation(int bias, int squareSize, int matrixSize, const double *
 }
 
 void SolveLeftEquation(int bias, int squareSize, int matrixSize, const double *A, double *L, const double *U) {
-	int i, j, k;
-	double sum;
 
-	#pragma omp parallel for private(sum, i, j, k)
-	for (i = bias + squareSize; i < matrixSize; i++) {
+	#pragma omp parallel for
+	for (int i = bias + squareSize; i < matrixSize; i++) {
 		L[i*(i + 1)/2 + bias] = A[i*matrixSize + bias]/U[bias*(bias + 3)/2];
-		for (j = bias + 1; j < bias + squareSize; j++) {
-			sum = 0;
-			for (k = bias; k < j; k++) {
+		for (int j = bias + 1; j < bias + squareSize; j++) {
+			double sum = 0;
+			for (int k = bias; k < j; k++) {
 				sum += L[i*(i + 1)/2 + k]*U[j*(j + 1)/2 + k];
 			}
 			L[i*(i + 1)/2 + j] = (A[i*matrixSize + j] - sum)/U[j*(j + 3)/2];
@@ -168,13 +164,12 @@ void SolveLeftEquation(int bias, int squareSize, int matrixSize, const double *A
 }
 
 void UpdateDiagonalSubmatrix(int bias, int squareSize, int matrixSize, double *A, double *L, double *U) {
-	int i, j, k;
-	
-	#pragma omp parallel for private(i, j, k)
-	for (i = bias + squareSize; i < matrixSize; i++) {
-		for (j = bias + squareSize; j < matrixSize; j++) {
+
+	#pragma omp parallel for
+	for (int i = bias + squareSize; i < matrixSize; i++) {
+		for (int j = bias + squareSize; j < matrixSize; j++) {
 			double sum = 0;
-			for (k = bias; k < bias + squareSize; k++) {
+			for (int k = bias; k < bias + squareSize; k++) {
 				sum += L[i*(i + 1)/2 + k]*U[j*(j + 1)/2 + k];
 			}
 			A[i*matrixSize + j] -= sum;
@@ -234,8 +229,8 @@ int main(int argc, char *argv[]) {
 	LUDecompose(N, A, L, U);
     QueryPerformanceCounter(&finish);
 	
-	WriteLMatrixToFile(argv[2], L, N);
-	WriteUMatrixToFile(argv[3], U, N);
+	//WriteLMatrixToFile(argv[2], L, N);
+	//WriteUMatrixToFile(argv[3], U, N);
 	WriteTimeToFile(argv[4], (finish.QuadPart - start.QuadPart)/pcFreq);
 	
 	_mm_free(A);

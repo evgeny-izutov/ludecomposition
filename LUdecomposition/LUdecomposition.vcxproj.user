@@ -14,7 +14,7 @@
     <LocalDebuggerCommandArguments>inputA.txt outputL.txt outputU.txt timeFile.txt</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>inputA.txt outputL.txt outputU.txt timeFile.txt</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>inputA.txt outputL1.txt outputU1.txt timeFile1.txt</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerWorkingDirectory>..\Release</LocalDebuggerWorkingDirectory>
