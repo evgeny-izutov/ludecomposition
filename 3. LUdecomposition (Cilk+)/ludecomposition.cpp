@@ -149,14 +149,12 @@ void SolveUpperEquation(int bias, int squareSize, int matrixSize, const double *
 }
 
 void SolveLeftEquation(int bias, int squareSize, int matrixSize, const double *A, double *L, const double *U) {
-	int i, j, k;
-	double sum;
 
-	for (i = bias + squareSize; i < matrixSize; i++) {
+	cilk_for (int i = bias + squareSize; i < matrixSize; i++) {
 		L[i*(i + 1)/2 + bias] = A[i*matrixSize + bias]/U[bias*(bias + 3)/2];
-		for (j = bias + 1; j < bias + squareSize; j++) {
-			sum = 0;
-			for (k = bias; k < j; k++) {
+		for (int j = bias + 1; j < bias + squareSize; j++) {
+			double sum = 0;
+			for (int k = bias; k < j; k++) {
 				sum += L[i*(i + 1)/2 + k]*U[j*(j + 1)/2 + k];
 			}
 			L[i*(i + 1)/2 + j] = (A[i*matrixSize + j] - sum)/U[j*(j + 3)/2];
@@ -165,13 +163,11 @@ void SolveLeftEquation(int bias, int squareSize, int matrixSize, const double *A
 }
 
 void UpdateDiagonalSubmatrix(int bias, int squareSize, int matrixSize, double *A, double *L, double *U) {
-	int i, j, k;
-	double sum;
 
-	for (i = bias + squareSize; i < matrixSize; i++) {
-		for (j = bias + squareSize; j < matrixSize; j++) {
-			sum = 0;
-			for (k = bias; k < bias + squareSize; k++) {
+	cilk_for (int i = bias + squareSize; i < matrixSize; i++) {
+		for (int j = bias + squareSize; j < matrixSize; j++) {
+			double sum = 0;
+			for (int k = bias; k < bias + squareSize; k++) {
 				sum += L[i*(i + 1)/2 + k]*U[j*(j + 1)/2 + k];
 			}
 			A[i*matrixSize + j] -= sum;
@@ -186,8 +182,9 @@ void LUDecompose(int matrixSize, double *A, double *L, double *U) {
 			break;
 		}
 		DiagonalSubmatrixLUDecompose(bias, BlockSize, matrixSize, A, L, U);
-		SolveUpperEquation(bias, BlockSize, matrixSize, A, L, U);
-		SolveLeftEquation(bias, BlockSize, matrixSize, A, L, U);
+		cilk_spawn(SolveUpperEquation(bias, BlockSize, matrixSize, A, L, U));
+		cilk_spawn(SolveLeftEquation(bias, BlockSize, matrixSize, A, L, U));
+		cilk_sync;
 		UpdateDiagonalSubmatrix(bias, BlockSize, matrixSize, A, L, U);
 	}
 }

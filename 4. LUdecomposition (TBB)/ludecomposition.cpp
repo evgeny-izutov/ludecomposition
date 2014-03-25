@@ -218,8 +218,6 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-	task_scheduler_init init(4);
-
 	int triangularMatrixSize = N*(N + 1)/2;
 	L = (double*)_mm_malloc(triangularMatrixSize*sizeof(double), 32);
 	U = (double*)_mm_malloc(triangularMatrixSize*sizeof(double), 32);

@@ -5,7 +5,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>inputA.txt outputL1.txt outputU1.txt timeFile1.txt</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>inputA.txt outputL2.txt outputU2.txt timeFile2.txt</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>..\x64\Release</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
