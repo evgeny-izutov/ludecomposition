@@ -6,7 +6,7 @@
     <LocalDebuggerWorkingDirectory>..\Debug</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>inputA.txt 100 100 1000</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>inputA.txt 500 500 1000</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>..\x64\Debug</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
@@ -16,7 +16,7 @@
     <LocalDebuggerWorkingDirectory>..\Release</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>inputA.txt 4000 4000 1000</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>inputA.txt 3000 3000 1000</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>..\x64\Release</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
