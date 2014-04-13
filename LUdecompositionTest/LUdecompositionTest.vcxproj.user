@@ -4,7 +4,7 @@
     <LocalDebuggerCommandArguments>inputA.txt outputL.txt outputU.txt</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>inputA.txt outputL5.txt outputU5.txt</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>inputA.txt L_mpi.txt U_mpi.txt</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerWorkingDirectory>..\Release</LocalDebuggerWorkingDirectory>

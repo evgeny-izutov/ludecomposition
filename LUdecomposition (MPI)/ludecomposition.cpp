@@ -8,21 +8,20 @@ using namespace std;
 
 #define BlockSize 100
 #define BlockGrainSize 150 //BlockGrainSize >= BlockSize; Good if BlockGrainSize < 2*BlockSize
-
 const int triangleBufferSize = BlockSize*(BlockSize + 1)/2;
+
 int procRank, nextProcRank, prevProcRank, procCount;
 double *A, *L, *U;
 int N;
 int *blocklengths, *displacements;
-MPI_Request *requestsLOnRecv, *requestsUOnRecv, *requestsResultOnRecv, *requestsLeftOnSend, *requestsUpOnSend, *requestsResultOnSend;
-MPI_Request requestResultOnRecv, requestLOnSend;
 double *LTriangle, *UTriangle, *LSquare, *USquare, *leftPart, *upPart, *result;
 int maxLocalBlockHeight;
 int *localBlockHeights;
 double startTime, finishTime;
 MPI_Datatype *triangleBlockTypes, *leftSquareBlockTypes, *upSquareBlockTypes, *resultBlockTypes;
-MPI_Status status;
-MPI_Status *recvStatuses;
+MPI_Request *requestsLOnRecv, *requestsUOnRecv, *requestsResultOnRecv, *requestsLeftOnSend, *requestsUpOnSend, *requestsResultOnSend;
+MPI_Request requestResultOnRecv, requestLOnSend, requestUOnSend;
+MPI_Status status, *recvStatuses;
 
 double* ReadMatrixFromFile(char *fileName, int &N) {
 	FILE *pFile = fopen(fileName, "r");
@@ -191,6 +190,18 @@ void FreeBuffers() {
 	}
 }
 
+void CalculateLocalBlockHeights(int bias) {
+	int firstBlockHeight = (N - BlockSize - bias)/procCount;
+	for (int i = 0; i < procCount - 1; i++) {
+		localBlockHeights[i] = firstBlockHeight;
+	}
+	int lastBlockHeight = firstBlockHeight;
+	if ((N - BlockSize - bias)%procCount != 0) {
+		lastBlockHeight = N - BlockSize - bias - firstBlockHeight*(procCount - 1);
+	}
+	localBlockHeights[procCount - 1] = lastBlockHeight;
+}
+
 void CommitTriangleBlockTypes(int bias) {
 	int iIndex = bias + BlockSize ;
 	int jIndex = bias;
@@ -315,18 +326,6 @@ void DiagonalSubmatrixLUDecompose(int bias, int squareSize) {
 	}
 }
 
-void CalculateLocalBlockHeights(int bias) {
-	int firstBlockHeight = (N - BlockSize - bias)/procCount;
-	for (int i = 0; i < procCount - 1; i++) {
-		localBlockHeights[i] = firstBlockHeight;
-	}
-	int lastBlockHeight = firstBlockHeight;
-	if ((N - BlockSize - bias)%procCount != 0) {
-		lastBlockHeight = N - BlockSize - bias - firstBlockHeight*(procCount - 1);
-	}
-	localBlockHeights[procCount - 1] = lastBlockHeight;
-}
-
 void SolveUpperEquation(int bias) {
 	int columnsCount = localBlockHeights[procRank];
 	for (int i = 0; i < columnsCount; i++) {
@@ -339,6 +338,14 @@ void SolveUpperEquation(int bias) {
 			USquare[i*BlockSize + j] = upPart[j*columnsCount + i] - sum;
 		}
 	}
+
+	if (procRank == 0) {
+		for (int i = 0; i < procCount; i++) {
+			MPI_Irecv(U, 1, triangleBlockTypes[i], i, 1, MPI_COMM_WORLD, &requestsUOnRecv[i]);
+		}
+	}
+
+	MPI_Isend(USquare, BlockSize*localBlockHeights[procRank], MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &requestUOnSend);
 }
 
 void SolveLeftEquation(int bias) {
@@ -353,24 +360,21 @@ void SolveLeftEquation(int bias) {
 			LSquare[i*BlockSize + j] = (leftPart[i*BlockSize + j] - sum)/UTriangle[j*(j + 3)/2];
 		}
 	}
-}
 
-void SendBackEquationsResult() {
 	if (procRank == 0) {
 		for (int i = 0; i < procCount; i++) {
 			MPI_Irecv(L, 1, triangleBlockTypes[i], i, 0, MPI_COMM_WORLD, &requestsLOnRecv[i]);
-			MPI_Irecv(U, 1, triangleBlockTypes[i], i, 1, MPI_COMM_WORLD, &requestsUOnRecv[i]);
 		}
 	}
 
 	MPI_Isend(LSquare, BlockSize*localBlockHeights[procRank], MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &requestLOnSend);
-	MPI_Send(USquare, BlockSize*localBlockHeights[procRank], MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
 }
 
 void UpdateDiagonalSubmatrix(int bias) {
 	int localLBlockSize = localBlockHeights[procRank];
 	int sourceProcRank = procRank;
 
+	MPI_Wait(&requestUOnSend, &status);
 	MPI_Wait(&requestResultOnRecv, &status);
 
 	for (int iter = 0; iter < procCount; iter++) {
@@ -398,15 +402,12 @@ void UpdateDiagonalSubmatrix(int bias) {
 			sourceProcRank = procCount - 1;
 		}
 	}
-}
 
-void SendBackUpdatedResult(int bias) {
 	if (procRank == 0) {
 		for (int i = 0; i < procCount; i++) {
 			MPI_Irecv(A, 1, resultBlockTypes[i], i, 0, MPI_COMM_WORLD, &requestsResultOnRecv[i]);
 		}
 	}
-
 	MPI_Send(result, localBlockHeights[procRank]*(N - bias - BlockSize), MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
 }
 
@@ -438,11 +439,9 @@ void LUDecompose() {
 		CommitSquareBlockTypes(bias);
 
 		DataDistribution(bias);
-		SolveUpperEquation(bias);
 		SolveLeftEquation(bias);
-		SendBackEquationsResult();
+		SolveUpperEquation(bias);
 		UpdateDiagonalSubmatrix(bias);
-		SendBackUpdatedResult(bias);
 
 		FreeTriangleBlockTypes();
 		FreeSquareBlockTypes();
