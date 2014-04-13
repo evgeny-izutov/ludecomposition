@@ -6,8 +6,8 @@
 
 using namespace std;
 
-#define BlockSize 100
-#define BlockGrainSize 150 //BlockGrainSize >= BlockSize; Good if BlockGrainSize < 2*BlockSize
+#define BlockSize 60
+#define BlockGrainSize 100 //BlockGrainSize >= BlockSize; Good if BlockGrainSize < 2*BlockSize
 const int triangleBufferSize = BlockSize*(BlockSize + 1)/2;
 
 int procRank, nextProcRank, prevProcRank, procCount;
@@ -489,7 +489,6 @@ int main(int argc, char *argv[]) {
 
 	FreeBuffers();
 
-	MPI_Barrier(MPI_COMM_WORLD);
 	if (procRank == 0) {
 		finishTime = MPI_Wtime();
 		WriteLMatrixToFile(argv[2], L, N);

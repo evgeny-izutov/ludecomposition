@@ -10,8 +10,8 @@
 using namespace std;
 using namespace tbb;
 
-#define BlockSize 100
-#define BlockGrainSize 150 //BlockGrainSize >= BlockSize; Good if BlockGrainSize < 2*BlockSize
+#define BlockSize 60
+#define BlockGrainSize 100 //BlockGrainSize >= BlockSize; Good if BlockGrainSize < 2*BlockSize
 
 double* ReadMatrixFromFile(char *fileName, int &N) {
 	FILE *pFile = fopen(fileName, "r");
