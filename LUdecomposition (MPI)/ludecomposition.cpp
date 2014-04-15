@@ -147,12 +147,13 @@ void AllocateBuffers() {
 	result = (double*)_mm_malloc((N - BlockSize)*maxLocalBlockHeight*sizeof(double), 32);
 
 	localBlockHeights = (int*)_mm_malloc(procCount*sizeof(int), 32);
-	triangleBlockTypes = (MPI_Datatype*)_mm_malloc(procCount*sizeof(MPI_Datatype), 32);
-	leftSquareBlockTypes = (MPI_Datatype*)_mm_malloc(procCount*sizeof(MPI_Datatype), 32);
-	upSquareBlockTypes = (MPI_Datatype*)_mm_malloc(procCount*sizeof(MPI_Datatype), 32);
-	resultBlockTypes = (MPI_Datatype*)_mm_malloc(procCount*sizeof(MPI_Datatype), 32);
-	
+		
 	if (procRank == 0) {
+		triangleBlockTypes = (MPI_Datatype*)_mm_malloc(procCount*sizeof(MPI_Datatype), 32);
+		leftSquareBlockTypes = (MPI_Datatype*)_mm_malloc(procCount*sizeof(MPI_Datatype), 32);
+		upSquareBlockTypes = (MPI_Datatype*)_mm_malloc(procCount*sizeof(MPI_Datatype), 32);
+		resultBlockTypes = (MPI_Datatype*)_mm_malloc(procCount*sizeof(MPI_Datatype), 32);
+		
 		requestsLOnRecv = (MPI_Request*)_mm_malloc(procCount*sizeof(MPI_Request), 32);
 		requestsUOnRecv = (MPI_Request*)_mm_malloc(procCount*sizeof(MPI_Request), 32);
 		requestsResultOnRecv = (MPI_Request*)_mm_malloc(procCount*sizeof(MPI_Request), 32);
@@ -174,12 +175,13 @@ void FreeBuffers() {
 	_mm_free(blocklengths);
 	_mm_free(displacements);
 	_mm_free(localBlockHeights);
-	_mm_free(triangleBlockTypes);
-	_mm_free(leftSquareBlockTypes);
-	_mm_free(upSquareBlockTypes);
-	_mm_free(resultBlockTypes);
-
+	
 	if (procRank == 0) {
+		_mm_free(triangleBlockTypes);
+		_mm_free(leftSquareBlockTypes);
+		_mm_free(upSquareBlockTypes);
+		_mm_free(resultBlockTypes);
+		
 		_mm_free(requestsLOnRecv);
 		_mm_free(requestsUOnRecv);
 		_mm_free(requestsResultOnRecv);
@@ -202,7 +204,7 @@ void CalculateLocalBlockHeights(int bias) {
 	localBlockHeights[procCount - 1] = lastBlockHeight;
 }
 
-void CommitTriangleBlockTypes(int bias) {
+void CommitSquareBlockTypes(int bias) {
 	int iIndex = bias + BlockSize ;
 	int jIndex = bias;
 	for (int i = 0; i < procCount; i++) {
@@ -214,17 +216,9 @@ void CommitTriangleBlockTypes(int bias) {
 		MPI_Type_commit(&triangleBlockTypes[i]);
 		iIndex += localBlockHeights[i];
 	}
-}
-
-void FreeTriangleBlockTypes() {
-	for (int i = 1; i < procCount; i++) {
-		MPI_Type_free(&triangleBlockTypes[i]);
-	}
-}
-
-void CommitSquareBlockTypes(int bias) {
-	int iIndex = bias + BlockSize ;
-	int jIndex = bias;
+	
+	iIndex = bias + BlockSize ;
+	jIndex = bias;
 	for (int i = 0; i < procCount; i++) {
 		for (int k = 0; k < localBlockHeights[i]; k++) {
 			blocklengths[k] = BlockSize;
@@ -263,10 +257,21 @@ void CommitSquareBlockTypes(int bias) {
 
 void FreeSquareBlockTypes() {
 	for (int i = 1; i < procCount; i++) {
+		MPI_Type_free(&triangleBlockTypes[i]);
 		MPI_Type_free(&leftSquareBlockTypes[i]);
 		MPI_Type_free(&upSquareBlockTypes[i]);
 		MPI_Type_free(&resultBlockTypes[i]);
 	}
+}
+
+void ResultMatrixBlockDistribution() {
+	if (procRank == 0) {	
+		for (int i = 0; i < procCount; i++) {
+			MPI_Isend(A, 1, resultBlockTypes[i], i, 2, MPI_COMM_WORLD, &requestsResultOnSend[i]);
+		}
+	}
+
+	MPI_Irecv(result, (N - BlockSize)*maxLocalBlockHeight, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD, &requestResultOnRecv);
 }
 
 void DataDistribution(int bias) {
@@ -289,13 +294,11 @@ void DataDistribution(int bias) {
 		for (int i = 0; i < procCount; i++) {
 			MPI_Isend(A, 1, leftSquareBlockTypes[i], i, 0, MPI_COMM_WORLD, &requestsLeftOnSend[i]);
 			MPI_Isend(A, 1, upSquareBlockTypes[i], i, 1, MPI_COMM_WORLD, &requestsUpOnSend[i]);
-			MPI_Isend(A, 1, resultBlockTypes[i], i, 2, MPI_COMM_WORLD, &requestsResultOnSend[i]);
 		}
 	}
 
 	MPI_Recv(leftPart, BlockSize*maxLocalBlockHeight, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &status);
 	MPI_Recv(upPart, BlockSize*maxLocalBlockHeight, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status);
-	MPI_Irecv(result, (N - BlockSize)*maxLocalBlockHeight, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD, &requestResultOnRecv);
 }
 
 void DiagonalSubmatrixLUDecompose(int bias, int squareSize) {
@@ -429,22 +432,27 @@ void LUDecompose() {
 			}
 			break;
 		}
-		if (procRank == 0) {
-			DiagonalSubmatrixLUDecompose(bias, BlockSize);
-		}
 
 		CalculateLocalBlockHeights(bias);
 
-		CommitTriangleBlockTypes(bias);
-		CommitSquareBlockTypes(bias);
+		if (procRank == 0) {
+			CommitSquareBlockTypes(bias);
+		}
+
+		ResultMatrixBlockDistribution();
+
+		if (procRank == 0) {
+			DiagonalSubmatrixLUDecompose(bias, BlockSize);
+		}
 
 		DataDistribution(bias);
 		SolveLeftEquation(bias);
 		SolveUpperEquation(bias);
 		UpdateDiagonalSubmatrix(bias);
 
-		FreeTriangleBlockTypes();
-		FreeSquareBlockTypes();
+		if (procRank == 0) {
+			FreeSquareBlockTypes();
+		}
 
 		Synchronize();
 	}
@@ -491,14 +499,17 @@ int main(int argc, char *argv[]) {
 
 	if (procRank == 0) {
 		finishTime = MPI_Wtime();
+		WriteTimeToFile(argv[4], finishTime - startTime);
+	}
+
+	MPI_Finalize();
+
+	if (procRank == 0) {
 		WriteLMatrixToFile(argv[2], L, N);
 		WriteUMatrixToFile(argv[3], U, N);
-		WriteTimeToFile(argv[4], finishTime - startTime);
 
 		FreeSourceData();
 	}
     
-	MPI_Finalize();
-
 	return 0;
 }
