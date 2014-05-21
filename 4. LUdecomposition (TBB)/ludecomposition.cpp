@@ -1,11 +1,11 @@
 #include <iostream>
 #include <fstream>
-#include <windows.h>
 #include <malloc.h>
 #include <tbb\tbb.h>
 #include <tbb\task_scheduler_init.h>
 #include <tbb\parallel_for.h>
 #include <tbb\blocked_range.h>
+#include "timer.h"
 
 using namespace std;
 using namespace tbb;
@@ -221,19 +221,15 @@ int main(int argc, char *argv[]) {
 	int triangularMatrixSize = N*(N + 1)/2;
 	L = (double*)_mm_malloc(triangularMatrixSize*sizeof(double), 32);
 	U = (double*)_mm_malloc(triangularMatrixSize*sizeof(double), 32);
-	
-	LARGE_INTEGER LIFrequency;
-	QueryPerformanceFrequency(&LIFrequency);
-	double pcFreq = (double) LIFrequency.QuadPart;
 
-	LARGE_INTEGER start, finish;
-	QueryPerformanceCounter(&start);
+	Timer timer;
+	timer.start();
 	LUDecompose(N, A, L, U);
-    QueryPerformanceCounter(&finish);
-	
+	timer.stop();
+
 	WriteLMatrixToFile(argv[2], L, N);
 	WriteUMatrixToFile(argv[3], U, N);
-	WriteTimeToFile(argv[4], (finish.QuadPart - start.QuadPart)/pcFreq);
+	WriteTimeToFile(argv[4], timer.getElapsed());
 	
 	_mm_free(A);
 	_mm_free(L);

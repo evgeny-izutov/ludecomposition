@@ -11,6 +11,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="ludecomposition.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
